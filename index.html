@@ -367,9 +367,10 @@ function simulateSwapValid(origin, target, requesterName, partnerName){
 // Rules:
 //  - same shift type (day/night), a different team than the origin
 //  - must be within the same calendar month as the origin date, and not before today
-//  - same week as origin: any other team is eligible (day-day / night-night)
-//  - different week: only a team that has that week's Monday off is eligible
+//  - same month as origin, not before today
 //  - and (always) the swap must not push either person over 52h in either affected week
+//    (a same-week swap is naturally zero-sum for both people, so it always passes;
+//     a different-week swap is only valid if both people stay under 52h in both weeks)
 function isValidSwapCandidate(y,m,d,slot,team){
   if(!pendingSwap) return false;
   if(slot !== pendingSwap.slot) return false;
@@ -381,12 +382,6 @@ function isValidSwapCandidate(y,m,d,slot,team){
   const t0 = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
   const cand = Date.UTC(y,m,d);
   if(cand < t0) return false;
-
-  const sameWeek = isSameIsoWeek(origin.y, origin.m, origin.d, y, m, d);
-  if(!sameWeek){
-    const monday = mondayOfWeek(y,m,d);
-    if(!teamHasMondayOff(team, monday)) return false;
-  }
 
   const target = {y,m,d,slot};
   return TEAM_MEMBERS[origin.team].some(req =>
